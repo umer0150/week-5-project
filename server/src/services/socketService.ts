@@ -30,7 +30,7 @@ export function setupSocketHandlers(
     const user = (
       socket as Socket & { user: ReturnType<typeof verifyAccessToken> }
     ).user;
-    console.log(`🔌 User connected: ${user.email} (${socket.id})`);
+    // console.log(`🔌 User connected: ${user.email} (${socket.id})`);
 
     socket.on("chat:join", async (conversationId: string) => {
       const conv = await db
@@ -110,7 +110,7 @@ export function setupSocketHandlers(
           }));
 
           socket.emit("typing:start", { conversationId });
-          console.log(`🤖 Calling AI for conversation: ${conversationId}`);
+          // console.log(`🤖 Calling AI for conversation: ${conversationId}`);
 
           let fullResponse = "";
 
@@ -123,7 +123,7 @@ export function setupSocketHandlers(
               socket.emit("chat:chunk", { chunk, conversationId });
             },
             (tool, input) => {
-              console.log(`🔧 Tool called: ${tool}`, input);
+              // console.log(`🔧 Tool called: ${tool}`, input);
             },
           );
 
@@ -168,7 +168,7 @@ export function setupSocketHandlers(
     );
 
     socket.on("disconnect", () => {
-      console.log(`🔌 User disconnected: ${user.email}`);
+      // console.log(`🔌 User disconnected: ${user.email}`);
     });
   });
 }
