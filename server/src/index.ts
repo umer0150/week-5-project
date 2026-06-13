@@ -26,7 +26,7 @@ if (env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "public");
   app.use(express.static(clientPath));
 
-  app.get("*", (req, res) => {
+  app.get("/*splat", (req, res) => {
     if (
       !req.path.startsWith("/api") &&
       !req.path.startsWith("/socket.io")
