@@ -89,7 +89,7 @@ async function handleEscalation(
 
 // ─── Tools Definition ─────────────────────────────────────────────────────────
 
-const TOOLS: Groq.Chat.CompletionCreateParams.Tool[] = [
+const TOOLS: any[] = [
   {
     type: "function",
     function: {
@@ -160,10 +160,7 @@ Always end with asking if there is anything else you can help with.`;
 
 const MAX_TOOL_ITERATIONS = 6;
 
-async function callGroq(
-  groqMessages: Groq.Chat.MessageParam[],
-  temperature: number
-) {
+async function callGroq(groqMessages: any[], temperature: number) {
   return groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: groqMessages,
@@ -185,7 +182,7 @@ export async function streamAIResponse(
   const contentParts: string[] = [];
   let escalationResult: EscalationResult | undefined;
 
-  const groqMessages: Groq.Chat.MessageParam[] = [
+  const groqMessages: any[] = [
     { role: "system", content: SYSTEM_PROMPT },
     ...messages.map((m) => ({
       role: m.role as "user" | "assistant",

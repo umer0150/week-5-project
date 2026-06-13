@@ -72,7 +72,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }),
 
   finishStreaming: (messageId) => {
-    const { streamingMessage, activeConversationId, messages } = get();
+    const { streamingMessage, activeConversationId } = get();
     if (!streamingMessage || !activeConversationId) return;
 
     const finalMessage: Message = {
