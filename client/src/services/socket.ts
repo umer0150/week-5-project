@@ -1,25 +1,43 @@
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "../store/authStore";
+import log from "loglevel";
 
-// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+if (import.meta.env.PROD) {
+  log.setLevel("warn");
+} else {
+  log.setLevel("debug");
+}
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+export default log;
+
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
 let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socket) {
     const token = useAuthStore.getState().accessToken;
+
     socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket", "polling"],
       autoConnect: true,
     });
 
-    socket.on("connect", () => console.log("🔌 Socket connected"));
-    socket.on("disconnect", () => console.log("🔌 Socket disconnected"));
-    socket.on("connect_error", (err) => console.error("Socket error:", err.message));
+    socket.on("connect", () => {
+      log.info("🔌 Socket connected", socket?.id);
+    });
+
+    socket.on("disconnect", (reason) => {
+      log.warn("🔌 Socket disconnected:", reason);
+    });
+
+    socket.on("connect_error", (err) => {
+      log.error("Socket error:", err.message);
+    });
   }
+
   return socket;
 }
 
