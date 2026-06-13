@@ -7,14 +7,27 @@ import RegisterPage from "./pages/RegisterPage";
 import ChatPage from "./pages/ChatPage";
 import TicketsPage from "./pages/TicketsPage";
 import FAQPage from "./pages/FAQPage";
+import { useAuthStore } from "./store/authStore";
 
 export default function App() {
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <>
       <Routes>
-        {/* Public */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        {/* Public — redirect to /chat if already logged in */}
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate to="/chat" replace /> : <LoginPage />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            isAuthenticated ? <Navigate to="/chat" replace /> : <RegisterPage />
+          }
+        />
 
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
