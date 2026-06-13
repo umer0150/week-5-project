@@ -3,7 +3,11 @@ import bcrypt from "bcryptjs";
 import { db } from "../db";
 import { users, refreshTokens } from "../db/schema";
 import { eq } from "drizzle-orm";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt";
 import { successResponse, errorResponse } from "../utils/response";
 import { z } from "zod";
 import type { AuthRequest } from "../types";
@@ -78,10 +82,15 @@ export async function register(req: Request, res: Response): Promise<void> {
       expiresAt,
     });
 
-    successResponse(res, { user, accessToken, refreshToken }, "Registration successful", 201);
+    successResponse(
+      res,
+      { user, accessToken, refreshToken },
+      "Registration successful",
+      201,
+    );
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     console.error("Register error:", err);
@@ -143,11 +152,11 @@ export async function login(req: Request, res: Response): Promise<void> {
         accessToken,
         refreshToken,
       },
-      "Login successful"
+      "Login successful",
     );
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     console.error("Login error:", err);

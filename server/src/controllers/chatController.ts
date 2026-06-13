@@ -20,7 +20,7 @@ export async function getConversations(req: AuthRequest, res: Response): Promise
     const userConversations = await db
       .select()
       .from(conversations)
-      .where(eq(conversations.userId, req.user!.userId))
+      .where(eq(conversations.userId, req.user!.userId as string))
       .orderBy(desc(conversations.updatedAt))
       .limit(50);
 
@@ -39,7 +39,7 @@ export async function createConversation(req: AuthRequest, res: Response): Promi
     const [conversation] = await db
       .insert(conversations)
       .values({
-        userId: req.user!.userId,
+        userId: req.user!.userId as string,
         title: body.title ?? "New Conversation",
       })
       .returning();
@@ -47,7 +47,7 @@ export async function createConversation(req: AuthRequest, res: Response): Promi
     successResponse(res, conversation, "Conversation created", 201);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     console.error("createConversation error:", err);
@@ -58,7 +58,7 @@ export async function createConversation(req: AuthRequest, res: Response): Promi
 // GET /api/conversations/:id - get single conversation with messages
 export async function getConversation(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     // Check ownership
     const [conversation] = await db
@@ -67,7 +67,7 @@ export async function getConversation(req: AuthRequest, res: Response): Promise<
       .where(
         and(
           eq(conversations.id, id),
-          eq(conversations.userId, req.user!.userId)
+          eq(conversations.userId, req.user!.userId as string)
         )
       )
       .limit(1);
@@ -94,7 +94,7 @@ export async function getConversation(req: AuthRequest, res: Response): Promise<
 // DELETE /api/conversations/:id
 export async function deleteConversation(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const [conversation] = await db
       .select()
@@ -102,7 +102,7 @@ export async function deleteConversation(req: AuthRequest, res: Response): Promi
       .where(
         and(
           eq(conversations.id, id),
-          eq(conversations.userId, req.user!.userId)
+          eq(conversations.userId, req.user!.userId as string)
         )
       )
       .limit(1);
@@ -124,7 +124,7 @@ export async function deleteConversation(req: AuthRequest, res: Response): Promi
 // GET /api/conversations/:id/messages - get just messages
 export async function getMessages(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     // Verify ownership
     const [conversation] = await db
@@ -133,7 +133,7 @@ export async function getMessages(req: AuthRequest, res: Response): Promise<void
       .where(
         and(
           eq(conversations.id, id),
-          eq(conversations.userId, req.user!.userId)
+          eq(conversations.userId, req.user!.userId as string)
         )
       )
       .limit(1);

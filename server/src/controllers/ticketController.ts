@@ -29,7 +29,7 @@ export async function getTickets(req: AuthRequest, res: Response): Promise<void>
       : await db
           .select()
           .from(tickets)
-          .where(eq(tickets.userId, req.user!.userId))
+          .where(eq(tickets.userId, req.user!.userId as string))
           .orderBy(desc(tickets.createdAt))
           .limit(50);
 
@@ -43,7 +43,7 @@ export async function getTickets(req: AuthRequest, res: Response): Promise<void>
 // GET /api/tickets/:id
 export async function getTicket(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const isAdmin = req.user?.role === "admin";
 
     const query = isAdmin
@@ -51,7 +51,7 @@ export async function getTicket(req: AuthRequest, res: Response): Promise<void> 
       : await db
           .select()
           .from(tickets)
-          .where(and(eq(tickets.id, id), eq(tickets.userId, req.user!.userId)))
+          .where(and(eq(tickets.id, id), eq(tickets.userId, req.user!.userId as string)))
           .limit(1);
 
     if (query.length === 0) {
@@ -74,7 +74,7 @@ export async function createTicket(req: AuthRequest, res: Response): Promise<voi
     const [ticket] = await db
       .insert(tickets)
       .values({
-        userId: req.user!.userId,
+        userId: req.user!.userId as string,
         title: body.title,
         description: body.description,
         priority: body.priority ?? "medium",
@@ -85,7 +85,7 @@ export async function createTicket(req: AuthRequest, res: Response): Promise<voi
     successResponse(res, ticket, "Ticket created", 201);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     console.error("createTicket error:", err);
@@ -96,7 +96,7 @@ export async function createTicket(req: AuthRequest, res: Response): Promise<voi
 // PATCH /api/tickets/:id
 export async function updateTicket(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const body = updateTicketSchema.parse(req.body);
 
     const [existing] = await db
@@ -128,7 +128,7 @@ export async function updateTicket(req: AuthRequest, res: Response): Promise<voi
     successResponse(res, updated, "Ticket updated");
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     console.error("updateTicket error:", err);

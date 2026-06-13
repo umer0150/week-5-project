@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../db";
 import { faqs } from "../db/schema";
-import { eq, ilike, or, desc } from "drizzle-orm";
+import { eq, ilike, or, and, desc, type SQL } from "drizzle-orm";
 import { successResponse, errorResponse } from "../utils/response";
 import type { AuthRequest } from "../types";
 import { z } from "zod";
@@ -18,22 +18,28 @@ export async function getFAQs(req: Request, res: Response): Promise<void> {
   try {
     const { search, category } = req.query;
 
-    let query = db.select().from(faqs).where(eq(faqs.isActive, true)).$dynamic();
+    const conditions: SQL[] = [eq(faqs.isActive, true)];
 
     if (search) {
-      query = query.where(
+      conditions.push(
         or(
           ilike(faqs.question, `%${search}%`),
           ilike(faqs.answer, `%${search}%`)
-        )
+        )!
       );
     }
 
     if (category) {
-      query = query.where(eq(faqs.category, category as string));
+      conditions.push(eq(faqs.category, category as string));
     }
 
-    const results = await query.orderBy(desc(faqs.viewCount)).limit(50);
+    const results = await db
+      .select()
+      .from(faqs)
+      .where(and(...conditions))
+      .orderBy(desc(faqs.viewCount))
+      .limit(50);
+
     successResponse(res, results);
   } catch (err) {
     console.error("getFAQs error:", err);
@@ -49,7 +55,7 @@ export async function createFAQ(req: AuthRequest, res: Response): Promise<void> 
     successResponse(res, faq, "FAQ created", 201);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     errorResponse(res, "Failed to create FAQ", 500);
@@ -59,7 +65,7 @@ export async function createFAQ(req: AuthRequest, res: Response): Promise<void> 
 // PATCH /api/faqs/:id (admin)
 export async function updateFAQ(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const body = faqSchema.partial().parse(req.body);
 
     const [updated] = await db
@@ -75,7 +81,7 @@ export async function updateFAQ(req: AuthRequest, res: Response): Promise<void> 
     successResponse(res, updated);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      errorResponse(res, err.errors[0].message, 422);
+      errorResponse(res, err.issues[0].message, 422);
       return;
     }
     errorResponse(res, "Failed to update FAQ", 500);
@@ -85,7 +91,7 @@ export async function updateFAQ(req: AuthRequest, res: Response): Promise<void> 
 // DELETE /api/faqs/:id (admin)
 export async function deleteFAQ(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await db.update(faqs).set({ isActive: false }).where(eq(faqs.id, id));
     successResponse(res, null, "FAQ deleted");
   } catch (err) {
