@@ -3,40 +3,42 @@ FROM node:20-alpine AS client-build
 
 WORKDIR /app/client
 
-# Accept build args for Vite
-ARG VITE_TLDRAW_LICENSE_KEY
-ARG VITE_SERVER_URL
-
-# Make them available to Vite during build
-ENV VITE_TLDRAW_LICENSE_KEY=$VITE_TLDRAW_LICENSE_KEY
-ENV VITE_SERVER_URL=$VITE_SERVER_URL
+ARG VITE_API_URL
+ARG VITE_SOCKET_URL
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
 
 COPY client/package*.json ./
 RUN npm install
 COPY client/ ./
 RUN npm run build
 
-# ── Stage 2: Setup Express backend ─────────────────────────
+# ── Stage 2: Build Express backend ─────────────────────────
 FROM node:20-alpine AS server-build
 
 WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm install
 COPY server/ ./
+RUN npm run build
 
 # ── Stage 3: Final image ────────────────────────────────────
 FROM node:20-alpine AS final
 
-RUN npm install -g tsx
-
 WORKDIR /app
-COPY --from=server-build /app/server ./server
-COPY --from=client-build /app/client/dist ./client/dist
+
+# Copy server files
+COPY --from=server-build /app/server/dist ./server/dist
+COPY --from=server-build /app/server/node_modules ./server/node_modules
+COPY --from=server-build /app/server/package*.json ./server/
+
+# Copy client build into server public folder
+COPY --from=client-build /app/client/dist ./server/dist/public
 
 ENV NODE_ENV=production
 
 WORKDIR /app/server
 
-EXPOSE 3001
+EXPOSE 5000
 
-CMD ["sh", "-c", "tsx src/db/migrate.ts && tsx src/server.ts"]
+CMD ["node", "dist/index.js"]

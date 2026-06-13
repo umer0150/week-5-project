@@ -13,11 +13,14 @@ services:
       timeout: 3s
       retries: 5
 
-  server:
+  app:
     build:
-      context: ./server
+      context: .
       dockerfile: Dockerfile
-    container_name: ai_server
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    container_name: ai_app
     restart: unless-stopped
     ports:
       - "5000:5000"
@@ -37,20 +40,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL}
-        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
-    container_name: ai_client
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    depends_on:
-      - server
 
 volumes:
   redis_data:

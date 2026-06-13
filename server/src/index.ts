@@ -14,10 +14,27 @@ import { errorHandler, notFound } from "./middleware/errorHandler";
 import { setupSocketHandlers } from "./services/socketService";
 import { startTicketWorker } from "./workers/ticketWorker";
 import type { ServerToClientEvents, ClientToServerEvents } from "./types";
+import path from "path";
 
 // ─── Express App ──────────────────────────────────────────────────────────────
 const app = express();
 const httpServer = createServer(app);
+
+
+// ─── Serve Frontend in Production ────────────────────────────────────────────
+if (env.NODE_ENV === "production") {
+  const clientPath = path.join(__dirname, "public");
+  app.use(express.static(clientPath));
+
+  app.get("*", (req, res) => {
+    if (
+      !req.path.startsWith("/api") &&
+      !req.path.startsWith("/socket.io")
+    ) {
+      res.sendFile(path.join(clientPath, "index.html"));
+    }
+  });
+}
 
 // ─── Socket.io ────────────────────────────────────────────────────────────────
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
